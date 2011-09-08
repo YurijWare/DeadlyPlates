@@ -1,0 +1,49 @@
+﻿name: DeadlyPlates
+main: com.yurijware.bukkit.deadlyplates.DeadlyPlates
+version: 1.0
+website: 
+database: true
+authors: [Yurij]
+softdepend: [Spout,PermissionsEx,Permissions,HawkEye,PreciousStones,WorldGuard]
+
+description: >
+             Create plates that damage players and entities, if they walk over them.
+             
+permissions:
+  DeadlyPlates.*:
+    description: Allows you to use all commands and functionality
+    children:
+      DeadlyPlates.create: true
+      DeadlyPlates.admin: true
+      DeadlyPlates.ignore-damage: true
+      DeadlyPlates.ignore-limit: true
+      
+  DeadlyPlates.create:
+    description: Allows the creation of deadly plates
+    default: true
+    
+  DeadlyPlates.admin:
+    description: Allows the removal/changing of others plates
+    default: op
+    
+  DeadlyPlates.ignore-damage:
+    description: Ignore damage done by a plate
+    
+  DeadlyPlates.ignore-limit:
+    description: Ignore the limit on plates
+    default: op
+    
+  DeadlyPlates.reload:
+    description: Allows you to reload the configuration
+    
+commands:
+  DeadlyPlates:
+    aliases: [dp]
+    description: Creates a deadly plate
+    usage: |
+           /<command> create [damage] - Create a deadly plate
+           /<command> remove - Remove a deadly plate
+           /<command> change [damage] - Change damage on a plate
+           /<command> list - Displays a list of deadly plates
+           /<command> reload - Displays a list of deadly plates
+           
