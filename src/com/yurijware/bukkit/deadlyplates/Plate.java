@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
-import com.avaje.ebean.Query;
 import com.avaje.ebean.validation.NotEmpty;
 import com.avaje.ebean.validation.NotNull;
 
@@ -219,11 +218,12 @@ public class Plate{
 		Material m = block.getType();
 		if (m != Material.WOOD_PLATE && m != Material.STONE_PLATE) { return null; }
 		
+		String w = block.getWorld().getName();
 		String x = block.getX() + "";
 		String y = block.getY() + "";
 		String z = block.getZ() + "";
-		Query<Plate> qp = DeadlyPlates.getInstance().getDatabase().find(Plate.class);
-		return qp.where().ieq("x", x).ieq("y", y).ieq("z", z).findUnique();
+		return DeadlyPlates.getInstance().getDatabase().find(Plate.class).
+				where().ieq("world", w).ieq("x", x).ieq("y", y).ieq("z", z).findUnique();
 	}
 	
 }
