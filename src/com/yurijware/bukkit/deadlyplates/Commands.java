@@ -23,6 +23,7 @@ public class Commands implements CommandExecutor {
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		Config conf = plugin.getSettings();
 		
 		if (args.length == 0) { return false; }
 		
@@ -32,13 +33,13 @@ public class Commands implements CommandExecutor {
 		}
 		
 		if (args[0].equalsIgnoreCase("reload")) {
-			if (!Config.checkPermissions(sender, "DeadlyPlates.reload") && (sender instanceof Player)) {
-				Messaging.sendMessage(sender, CAUSE.ERROR_PERMISSION);
+			if (!conf.checkPermissions(sender, "DeadlyPlates.reload") && (sender instanceof Player)) {
+				plugin.getMessaging().send(sender, CAUSE.ERROR_PERMISSION);
 				return true;
 			}
 			
-			Config.load();
-			Messaging.sendMessage(sender, CAUSE.RELOADED);
+			conf.load();
+			plugin.getMessaging().send(sender, CAUSE.RELOADED);
 			return true;
 			
 		} else if (args[0].equalsIgnoreCase("create") && sender instanceof Player) {
@@ -62,51 +63,52 @@ public class Commands implements CommandExecutor {
 			return true;
 		}
 		
-		Messaging.sendMessage(sender, CAUSE.ERROR_SYNTAX);
+		plugin.getMessaging().send(sender, CAUSE.ERROR_SYNTAX);
 		return false;
 	}
 	
 	private void createPlate(Player player, String[] args) {
+		Config conf = plugin.getSettings();
 		Block block = player.getTargetBlock(null, 10);
 		
 		//Check for permission and if player is permitted to
 		//build by protection plugins
-		if (!Config.checkPermissions(player, "DeadlyPlates.create") || !Config.isProtected(player, block)) {
-			Messaging.sendMessage(player, CAUSE.ERROR_PERMISSION);
+		if (!conf.checkPermissions(player, "DeadlyPlates.create") || !conf.isProtected(player, block)) {
+			plugin.getMessaging().send(player, CAUSE.ERROR_PERMISSION);
 			return;
 		}
 		
 		if (block.getType() != Material.STONE_PLATE && block.getType() != Material.WOOD_PLATE) {
-			Messaging.sendMessage(player, CAUSE.ERROR_TARGET);
+			plugin.getMessaging().send(player, CAUSE.ERROR_TARGET);
 			return;
 		}
 		
 		Plate p = Plate.getPlateIfDeadly(block);
 		if (p != null) {
-			Messaging.sendMessage(player, CAUSE.ERROR_EXISTS);
+			plugin.getMessaging().send(player, CAUSE.ERROR_EXISTS);
 			return;
 		}
 		
-		int limit = Config.getPlateLimit();
+		int limit = conf.getPlateLimit();
 		int count = plugin.getDatabase().find(Plate.class)
 				.where().ieq("player", player.getName()).findRowCount();
 		
 		if (count >= limit) {
-			Messaging.sendMessage(player, CAUSE.ERROR_LIMIT);
+			plugin.getMessaging().send(player, CAUSE.ERROR_LIMIT);
 			return;
 		}
 		
-		int damage = Config.getDefaultDamage();
+		int damage = conf.getDefaultDamage();
 		if (args.length > 1) {
 			try {
 				damage = Integer.parseInt(args[1]);
 			} catch (NumberFormatException e) {
-				Messaging.sendMessage(player, CAUSE.ERROR_NUMBER);
+				plugin.getMessaging().send(player, CAUSE.ERROR_NUMBER);
 				return;
 			}
 			
-			if (damage > Config.getMaxDamage()) {
-				damage = Config.getMaxDamage();
+			if (damage > conf.getMaxDamage()) {
+				damage = conf.getMaxDamage();
 			}
 		}
 		
@@ -114,23 +116,24 @@ public class Commands implements CommandExecutor {
 		Plate plate = new Plate(block, player.getName(), damage);
 		plugin.getDatabase().save(plate);
 		
-		Config.logHawkEye(player, plate, CAUSE.CREATED); //Log with hawkeye
-		Messaging.sendMessage(player, CAUSE.CREATED); //Send message
+		conf.logHawkEye(player, plate, CAUSE.CREATED); //Log with hawkeye
+		plugin.getMessaging().send(player, CAUSE.CREATED); //Send message
 	}
 	
 	private void removePlate(Player player) {
+		Config conf = plugin.getSettings();
 		Block block = player.getTargetBlock(null, 10); //Get targeted block
 		
 		//Check if block is a plate
 		if (block.getType() != Material.STONE_PLATE && block.getType() != Material.WOOD_PLATE) {
-			Messaging.sendMessage(player, CAUSE.ERROR_TARGET);
+			plugin.getMessaging().send(player, CAUSE.ERROR_TARGET);
 			return;
 		}
 		
 		//Check if plate is deadly
 		Plate plate = Plate.getPlateIfDeadly(block);
 		if (plate == null) {
-			Messaging.sendMessage(player, CAUSE.ERROR_NOTDEADLY);
+			plugin.getMessaging().send(player, CAUSE.ERROR_NOTDEADLY);
 			return;
 		}
 		
@@ -139,51 +142,52 @@ public class Commands implements CommandExecutor {
 		//Must be owner or have permission and is permitted to
 		//build by protection plugins
 		if ((!owner.equals(player.getName()) &&
-				!Config.checkPermissions(player, "DeadlyPlates.admin")) ||
-				!Config.isProtected(player, block)) {
-			Messaging.sendMessage(player, CAUSE.ERROR_PERMISSION);
+				!conf.checkPermissions(player, "DeadlyPlates.admin")) ||
+				!conf.isProtected(player, block)) {
+			plugin.getMessaging().send(player, CAUSE.ERROR_PERMISSION);
 			return;
 		}
 		
 		plugin.getDatabase().delete(plate); //Remove plate
-		Config.logHawkEye(player, plate, CAUSE.REMOVED); //Log with hawkey
-		Messaging.sendMessage(player, CAUSE.REMOVED); //Send message
+		conf.logHawkEye(player, plate, CAUSE.REMOVED); //Log with hawkeye
+		plugin.getMessaging().send(player, CAUSE.REMOVED); //Send message
 	}
 	
 	private void changePlate(Player player, String[] args) {
+		Config conf = plugin.getSettings();
 		Block block = player.getTargetBlock(null, 10);
 		
 		int damage = 1;
 		try {
 			damage = Integer.parseInt(args[1]);
-			if (damage > Config.getMaxDamage()) { damage = Config.getMaxDamage(); }
+			if (damage > conf.getMaxDamage()) { damage = conf.getMaxDamage(); }
 		} catch (NumberFormatException e) {
-			Messaging.sendMessage(player, CAUSE.ERROR_NUMBER);
+			plugin.getMessaging().send(player, CAUSE.ERROR_NUMBER);
 			return;
 		}
 		
 		Plate plate = Plate.getPlateIfDeadly(block);
 		if (plate == null) {
-			Messaging.sendMessage(player, CAUSE.ERROR_NOTDEADLY);
+			plugin.getMessaging().send(player, CAUSE.ERROR_NOTDEADLY);
 			return;
 		}
 		
 		if ((!player.getName().equals(plate.getPlayer()) &&
-				!Config.checkPermissions(player, "DeadlyPlates.admin")) ||
-				!Config.isProtected(player, block)) {
-			Messaging.sendMessage(player, CAUSE.ERROR_PERMISSION);
+				!conf.checkPermissions(player, "DeadlyPlates.admin")) ||
+				!conf.isProtected(player, block)) {
+			plugin.getMessaging().send(player, CAUSE.ERROR_PERMISSION);
 			return;
 		}
 		
 		plate.setDamage(damage);
 		plugin.getDatabase().save(plate);
 		
-		Config.logHawkEye(player, plate, CAUSE.CHANGED);
-		Messaging.sendMessage(player, CAUSE.CHANGED);
+		conf.logHawkEye(player, plate, CAUSE.CHANGED);
+		plugin.getMessaging().send(player, CAUSE.CHANGED);
 	}
 	
 	private void listPlates(Player player) {
-		player.sendMessage(Config.getLangChat(CAUSE.LIST));
+		player.sendMessage("§9DeadlyPlates list");
 		QueryIterator<Plate> itr = plugin.getDatabase().find(Plate.class)
 				.where().ieq("player", player.getName()).findIterate();
 		int count = 0;
@@ -191,12 +195,12 @@ public class Commands implements CommandExecutor {
 			Plate p = itr.next();
 			player.sendMessage("§bId=" + p.getId() + " X=" + p.getX() + " Y="
 					+ p.getY() + " Z=" + p.getZ() + " World="
-					+ p.getWorld());
+					+ p.getWorld() + " Damage=" + p.getDamage());
 			count++;
 		}
 		itr.close();
 		if (count == 0) {
-			player.sendMessage(Config.getLangChat(CAUSE.ERROR_NOPLATES));
+			player.sendMessage("§cYou dont have any deadly plates");
 		}
 	}
 	

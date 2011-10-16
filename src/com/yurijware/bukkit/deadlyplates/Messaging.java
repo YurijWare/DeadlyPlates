@@ -15,7 +15,12 @@ import org.getspout.spoutapi.sound.SoundManager;
  * @author Yurij
  */
 public class Messaging {
+	private final DeadlyPlates plugin;
 	private static SoundManager sound = null;
+	
+	public Messaging(DeadlyPlates plugin) {
+		this.plugin = plugin;
+	}
 	
 	/**
 	 * The cause to use when a message is sent
@@ -28,46 +33,79 @@ public class Messaging {
 	/**
 	 * Sends a message with either spout notifications or chat messages
 	 * @param sender The receiver of the message
-	 * @param casue The cause
+	 * @param cause The cause
 	 * @see CAUSE
 	 */
-	protected static void sendMessage(CommandSender sender, CAUSE cause) {
+	public void send(CommandSender sender, CAUSE cause) {
+		Config conf = plugin.getSettings();
+		
 		Material m = Material.AIR;
 		short d = 0;
 		int sec = 2;
-		String spoutHeader = Config.getSpoutHeader();
+		String spoutHeader = "DeadlyPlates";
 		String spoutMessage = "";
 		String chatMessage = "";
-		String soundUrl = Config.getSound(cause);
+		String soundUrl = conf.getSound(cause);
 		
 		if (!isValidUrl(soundUrl)) { soundUrl = "";  }
 		
-		spoutMessage = Config.getLangSpout(cause);
-		chatMessage = Config.getLangChat(cause);
-		
 		switch (cause) {
 		case CREATED:
+			m = Material.TNT;
+			sec = 3;
+			spoutMessage = "Plate created";
+			chatMessage = "§7Plate created";
+			break;
 		case CHANGED:
 			m = Material.TNT;
 			sec = 3;
+			spoutMessage = "Plate changed";
+			chatMessage = "§7Plate changed";
 			break;
 		case REMOVED:
 			m = Material.STONE_PLATE;
 			sec = 3;
+			spoutMessage = "Plate removed";
+			chatMessage = "§7Plate removed";
 			break;
 		case RELOADED:
 			m = Material.WATER_BUCKET;
 			sec = 3;
+			spoutMessage = "Config reloaded";
+			chatMessage = "§9Deadly plates config reloaded";
 			break;
 		case DESTROYED:
+			m = Material.LAVA_BUCKET;
+			spoutMessage = "Plate destroyed";
+			chatMessage = "§cPlate destroyed";
 		case ERROR_EXISTS:
+			m = Material.LAVA_BUCKET;
+			spoutMessage = "Already deadly";
+			chatMessage = "§cThat plate is already deadly";
 		case ERROR_LIMIT:
+			m = Material.LAVA_BUCKET;
+			spoutMessage = "Limit reached";
+			chatMessage = "§cYou have reached your limit";
 		case ERROR_NOTDEADLY:
+			m = Material.LAVA_BUCKET;
+			spoutMessage = "That plate isnt deadly";
+			chatMessage = "§cThat plate isnt deadly";
 		case ERROR_NUMBER:
+			m = Material.LAVA_BUCKET;
+			spoutMessage = "Invalid number";
+			chatMessage = "§cInvalid number";
 		case ERROR_PERMISSION:
+			m = Material.LAVA_BUCKET;
+			spoutMessage = "You need permission";
+			chatMessage = "§cYou need permission";
 		case ERROR_SYNTAX:
+			m = Material.LAVA_BUCKET;
+			spoutMessage = "Command syntax error";
+			chatMessage = "§cCommand syntax error";
 		case ERROR_TARGET:
 			m = Material.LAVA_BUCKET;
+			spoutMessage = "Must be wood/stone plate";
+			chatMessage = "§cYou must target a stone or wood plate";
 			break;
 		}
 		
@@ -77,11 +115,12 @@ public class Messaging {
 		}
 		
 		Player player = (Player) sender;
-		boolean spoutEnabledPlayer = Config.getSpoutEnabled() && (((SpoutPlayer) player).isSpoutCraftEnabled());
+		boolean spoutEnabledPlayer = conf.getSpoutEnabled() &&
+				(((SpoutPlayer) player).isSpoutCraftEnabled());
 		
 		if (spoutEnabledPlayer && soundUrl.length() > 0) {
 			sound = SpoutManager.getSoundManager();
-			sound.playCustomSoundEffect(DeadlyPlates.getInstance(), (SpoutPlayer) player, soundUrl, false);
+			sound.playCustomSoundEffect(plugin, (SpoutPlayer) player, soundUrl, false);
 		}
 		
 		if (spoutEnabledPlayer && spoutMessage.length() > 0) {
